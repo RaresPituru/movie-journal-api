@@ -11,36 +11,32 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/movies")
 public class MovieController {
-    private final MovieRepository movieRepository;
+    private final MovieService movieService;
 
-    public MovieController(MovieRepository movieRepository){
-        this.movieRepository = movieRepository;
+    public MovieController(MovieService movieService){
+        this.movieService = movieService;
     }
 
     @GetMapping("")
     List<Movie> findAll(){
-        return movieRepository.findAll();
+        return movieService.findAll();
     }
     @GetMapping("/{id}")
     Movie findById(@PathVariable Integer id){
-        Optional<Movie> movie = movieRepository.findById(id);
-        if(movie.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
-        }
-        return movie.get();
+        return movieService.findById(id);
     }
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("")
     void create(@Valid @RequestBody Movie movie){
-        movieRepository.create(movie);
+        movieService.create(movie);
     }
 
     @PutMapping("/{id}")
     void update(@Valid @RequestBody Movie movie,@PathVariable Integer id){
-        movieRepository.update(movie,id);
+        movieService.update(movie,id);
     }
     @DeleteMapping("/{id}")
     void delete(@PathVariable Integer id){
-        movieRepository.delete(id);
+        movieService.delete(id);
     }
 }
