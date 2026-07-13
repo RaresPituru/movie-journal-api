@@ -13,35 +13,43 @@ public class MovieRepository {
     public MovieRepository(JdbcClient jdbcClient){
         this.jdbcClient = jdbcClient;
     }
-    public List<Movie> findAll(){
-        return jdbcClient.sql("select * from movie").query(Movie.class).list();
+    public List<Movie> findAll(Integer userId){
+        return jdbcClient.sql("select * from movie WHERE user_id = :userId").
+                param("userId",userId).query(Movie.class).list();
     }
-    public Optional<Movie> findById(Integer id) {
-        return jdbcClient.sql("SELECT * FROM movie WHERE id = :id")
+
+    public Optional<Movie> findById(Integer id,Integer userId) {
+        return jdbcClient.sql("SELECT * FROM movie WHERE id = :id AND user_id = :userId")
                 .param("id", id)
+                .param("userId",userId)
                 .query(Movie.class)
                 .optional();
     }
+
     public void create(Movie movie){
-             jdbcClient.sql("INSERT INTO movie (id,title,rating,review,release_year) VALUES(:id, :title, :rating, :review, :release_year)")
+             jdbcClient.sql("INSERT INTO movie (id,title,rating,review,release_year,user_id) " +
+                             "VALUES(:id, :title, :rating, :review, :release_year, :user_id)")
                .param("id",movie.id())
                .param("title",movie.title())
                .param("rating",movie.rating())
                .param("review",movie.review())
-               .param("release_year",movie.releaseYear()).update();
+               .param("release_year",movie.releaseYear()).param("user_id",movie.userId()).update();
     }
-    public void update(Movie movie,Integer id){
-        jdbcClient.sql("UPDATE movie SET title = :title, rating = :rating, review = :review, release_year = :release_year WHERE id = :id")
+    public void update(Movie movie,Integer id,Integer userId){
+        jdbcClient.sql("UPDATE movie SET title = :title, rating = :rating, review = :review," +
+                        "release_year = :release_year WHERE id = :id AND user_id = :userId")
                 .param("title", movie.title())
                 .param("rating",movie.rating())
                 .param("review",movie.review())
                 .param("release_year",movie.releaseYear())
-                .param("id",id).update();
+                .param("id",id)
+                .param("userId",userId).update();
     }
 
-    public void delete(Integer id){
-        jdbcClient.sql("delete from movie where id = :id")
+    public void delete(Integer id,Integer userId){
+        jdbcClient.sql("delete from movie where id = :id AND user_id = :userId")
                 .param("id",id)
+                .param("userId",userId)
                 .update();
     }
 }
