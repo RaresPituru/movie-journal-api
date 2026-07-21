@@ -1,49 +1,46 @@
-# Movie Journal API
+# 🎬 Movie Journal API
 
-A RESTful API for keeping a personal movie journal — save movies you've watched, 
-rate them from 1 to 5, and write short reviews.
+A RESTful API built with **Spring Boot** and **PostgreSQL** that allows users to track, manage, and organize their personal movie journal. The application features full JWT authentication, user-data isolation, Swagger API documentation, and complete containerization via **Docker & Docker Compose**.
 
-Built with Spring Boot as a hands-on project to learn backend development with Java.
+---
 
-## Tech Stack
+## 🚀 Features
 
-- **Java 21**
-- **Spring Boot** (Spring Web, Spring Data JDBC, Validation)
-- **H2** in-memory database
-- **Maven** for build and dependency management
+* 🔐 **Authentication & Security:** JWT-based authentication with Spring Security.
+* 👤 **User Data Isolation:** Users can only view, add, or manage their own movie entries.
+* 🗄️ **Database Integration:** Relational database storage powered by **PostgreSQL**.
+* 🐳 **Dockerized Setup:** Fully containerized setup with multi-stage Docker builds and `docker-compose`.
+* 📖 **API Documentation:** Interactive Swagger UI for testing API endpoints.
 
-## Features
+---
 
-- Full CRUD operations for movies (Create, Read, Update, Delete)
-- Input validation (rating must be 1–5, title cannot be empty)
-- Layered architecture (Controller → Repository)
-- Proper HTTP status codes (201 Created, 404 Not Found, 400 Bad Request)
+## 🛠️ Tech Stack
 
-## API Endpoints
+* **Language:** Java 21
+* **Framework:** Spring Boot 3
+* **Security:** Spring Security & JSON Web Tokens (JWT)
+* **Database:** PostgreSQL
+* **ORM:** Spring Data JPA / Hibernate
+* **Containerization:** Docker & Docker Compose
+* **Documentation:** Springdoc OpenAPI / Swagger UI
+* **Build Tool:** Maven
 
-| Method | Endpoint          | Description              |
-|--------|-------------------|--------------------------|
-| GET    | /api/movies       | Get all movies           |
-| GET    | /api/movies/{id}  | Get a movie by ID        |
-| POST   | /api/movies       | Add a new movie          |
-| PUT    | /api/movies/{id}  | Update an existing movie  |
-| DELETE | /api/movies/{id}  | Delete a movie           |
+---
 
-## Movie Model
+## 📋 Prerequisites
 
-```json
-{
-  "id": 1,
-  "title": "Inception",
-  "rating": 5,
-  "review": "Great movie",
-  "releaseYear": 2010
-}
-```
+Make sure you have the following installed on your machine:
 
-## Running Locally
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Engine & Docker Compose)
+* [Git](https://git-scm.com/)
 
-1. Clone the repository
-2. Run `./mvnw spring-boot:run` (or run the main class from your IDE)
-3. The API will be available at `http://localhost:8080`
-4. H2 console: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:movies`)
+---
+
+## ⚙️ How to Run with Docker (Recommended)
+
+Thanks to Docker Compose, you don't need Java or PostgreSQL installed locally to run the application.
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/RaresPituru/movie-journal-api.git]
+   cd movie-journal-api
