@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Containerul pentru PostgreSQL
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: moviejournal-db
+    environment:
+      POSTGRES_DB: moviejournal
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Containerul pentru Aplicația Spring Boot
+  app:
+    build: .
+    container_name: moviejournal-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres-db
+    depends_on:
+      - postgres-db
+
+volumes:
+  postgres_data:
