@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin) with Maven cache
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Runs unit and integration tests. The integration tests start PostgreSQL
+      # with Testcontainers, using the Docker engine preinstalled on ubuntu-latest.
+      - name: Build and test
+        run: ./mvnw -B verify
