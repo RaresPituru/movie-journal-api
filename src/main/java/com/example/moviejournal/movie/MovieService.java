@@ -27,6 +27,10 @@ public class MovieService {
         return PageResponse.of(content, page, size, totalElements);
     }
 
+    public MovieStatsResponse getStats(Integer userId) {
+        return movieRepository.getStats(userId);
+    }
+
     public MovieResponse findById(Integer id, Integer userId) {
         return movieRepository.findById(id, userId)
                 .map(MovieResponse::from)

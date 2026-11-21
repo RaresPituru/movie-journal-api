@@ -34,6 +34,12 @@ public class MovieController {
         return movieService.findAll(user.id(), page, size, sort, direction, minRating);
     }
 
+    // A literal path like /stats takes precedence over the /{id} pattern.
+    @GetMapping("/stats")
+    MovieStatsResponse stats(@AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.getStats(user.id());
+    }
+
     @GetMapping("/{id}")
     MovieResponse findById(@PathVariable Integer id, @AuthenticationPrincipal AuthenticatedUser user) {
         return movieService.findById(id, user.id());

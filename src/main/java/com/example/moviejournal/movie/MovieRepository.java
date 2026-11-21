@@ -55,6 +55,37 @@ public class MovieRepository {
                 .single();
     }
 
+    /** All aggregation is done by the database, not by loading every movie into Java. */
+    public MovieStatsResponse getStats(Integer userId) {
+        // COUNT(*) is 0 and AVG is NULL when the user has no movies.
+        // AVG of integers is a NUMERIC in PostgreSQL, so it maps to BigDecimal; rounded to 2 decimals.
+        MovieStatsResponse totals = jdbcClient.sql("""
+                        SELECT COUNT(*) AS total_movies, ROUND(AVG(rating), 2) AS average_rating
+                        FROM movie
+                        WHERE user_id = :userId
+                        """)
+                .param("userId", userId)
+                .query((rs, rowNum) -> new MovieStatsResponse(
+                        rs.getLong("total_movies"), rs.getBigDecimal("average_rating"), null))
+                .single();
+
+        // On a tie, the movie added first (lowest id) wins.
+        MovieStatsResponse.HighestRatedMovie highest = jdbcClient.sql("""
+                        SELECT title, rating
+                        FROM movie
+                        WHERE user_id = :userId
+                        ORDER BY rating DESC, id
+                        LIMIT 1
+                        """)
+                .param("userId", userId)
+                .query((rs, rowNum) -> new MovieStatsResponse.HighestRatedMovie(
+                        rs.getString("title"), rs.getInt("rating")))
+                .optional()
+                .orElse(null);
+
+        return new MovieStatsResponse(totals.totalMovies(), totals.averageRating(), highest);
+    }
+
     /** Both the page query and the count query must use exactly the same filter. */
     private static String whereClause(Integer minRating) {
         return minRating == null
