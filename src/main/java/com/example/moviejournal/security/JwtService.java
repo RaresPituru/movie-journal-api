@@ -1,47 +1,58 @@
 package com.example.moviejournal.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class JwtService {
 
-    private final SecretKey key = Keys.hmacShaKeyFor(
-            "aceasta-este-o-cheie-secreta-foarte-lunga-de-minim-32-de-caractere".getBytes() //doar de testare, am pus o in cod
-    );
+    private static final String USER_ID_CLAIM = "uid";
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+    private final SecretKey key;
+    private final long expirationMs;
 
-    public String generateToken(String username){
+    public JwtService(@Value("${jwt.secret}") String secret,
+                      @Value("${jwt.expiration-ms}") long expirationMs) {
+        // Throws WeakKeyException at start-up if the secret is shorter than 256 bits.
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationMs = expirationMs;
+    }
+
+    public String generateToken(Integer userId, String username) {
+        Date now = new Date();
         return Jwts.builder()
                 .subject(username)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .claim(USER_ID_CLAIM, userId)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(key)
                 .compact();
     }
-    public String extractUsername(String token){
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    }
 
-    public boolean isTokenValid(String token){
+    /**
+     * Verifies the signature and expiry of the token.
+     *
+     * @return the user the token was issued to, or empty if the token is invalid
+     */
+    public Optional<AuthenticatedUser> parseToken(String token) {
         try {
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(key)
                     .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (Exception e) {
-            return false;
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return Optional.of(new AuthenticatedUser(claims.get(USER_ID_CLAIM, Integer.class), claims.getSubject()));
+        } catch (JwtException | IllegalArgumentException e) {
+            return Optional.empty();
         }
     }
 }

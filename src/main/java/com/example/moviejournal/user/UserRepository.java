@@ -12,13 +12,15 @@ public class UserRepository {
     public UserRepository(JdbcClient jdbcClient) {
         this.jdbcClient = jdbcClient;
     }
-    public void create(User user){
-        jdbcClient.sql("INSERT INTO users (id,username,password,role) VALUES (:id, :username, :password, :role)")
-                .param("id",user.getId())
-                .param("username",user.getUsername())
-                .param("password",user.getPassword())
-                .param("role",user.getRole()).update();
+    public void create(User user) {
+        // No id column: the database generates it (GENERATED ALWAYS AS IDENTITY).
+        jdbcClient.sql("INSERT INTO users (username, password, role) VALUES (:username, :password, :role)")
+                .param("username", user.getUsername())
+                .param("password", user.getPassword())
+                .param("role", user.getRole())
+                .update();
     }
+
     public Optional<User> findByUsername(String name){
         return jdbcClient.sql("SELECT * FROM users WHERE username = :name").param("name",name)
                 .query(User.class)

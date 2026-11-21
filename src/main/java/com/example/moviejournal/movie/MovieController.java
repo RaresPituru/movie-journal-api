@@ -1,56 +1,47 @@
 package com.example.moviejournal.movie;
 
-import com.example.moviejournal.user.UserRepository;
+import com.example.moviejournal.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/movies")
 public class MovieController {
     private final MovieService movieService;
-    private final UserRepository userRepository;
 
-    public MovieController(MovieService movieService,UserRepository userRepository){
+    public MovieController(MovieService movieService) {
         this.movieService = movieService;
-        this.userRepository = userRepository;
     }
 
-    @GetMapping("")
-    List<Movie> findAll(){
-        return movieService.findAll(getCurrentUserId());
+    @GetMapping
+    List<Movie> findAll(@AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.findAll(user.id());
     }
 
     @GetMapping("/{id}")
-    Movie findById(@PathVariable Integer id){
-        return movieService.findById(id,getCurrentUserId());
+    Movie findById(@PathVariable Integer id, @AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.findById(id, user.id());
     }
 
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("")
-    void create(@Valid @RequestBody Movie movie){
-        movieService.create(movie,getCurrentUserId());
+    Movie create(@Valid @RequestBody Movie movie, @AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.create(movie, user.id());
     }
 
     @PutMapping("/{id}")
-    void update(@Valid @RequestBody Movie movie,@PathVariable Integer id){
-        movieService.update(movie,id,getCurrentUserId());
+    Movie update(@PathVariable Integer id, @Valid @RequestBody Movie movie,
+                 @AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.update(id, movie, user.id());
     }
 
     @DeleteMapping("/{id}")
-    void delete(@PathVariable Integer id){
-        movieService.delete(id,getCurrentUserId());
-    }
-
-    private Integer getCurrentUserId(){
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getId();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@PathVariable Integer id, @AuthenticationPrincipal AuthenticatedUser user) {
+        movieService.delete(id, user.id());
     }
 }

@@ -1,37 +1,41 @@
 package com.example.moviejournal.movie;
 
 import org.springframework.stereotype.Service;
+
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class MovieService {
     private final MovieRepository movieRepository;
 
-    public MovieService(MovieRepository movieRepository){
+    public MovieService(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
     }
 
-    public List<Movie> findAll(Integer userId){
+    public List<Movie> findAll(Integer userId) {
         return movieRepository.findAll(userId);
     }
-   public void create(Movie movie,Integer userId){
-        Movie movieWithUser = new Movie(movie.id(),movie.title(),movie.rating(),
-                movie.review(),movie.releaseYear(),userId);
 
-        movieRepository.create(movieWithUser);
+    public Movie findById(Integer id, Integer userId) {
+        return movieRepository.findById(id, userId)
+                .orElseThrow(() -> new MovieNotFoundException(id));
     }
-    public void update(Movie movie,Integer id,Integer userId){
-        movieRepository.update(movie,id,userId);
+
+    public Movie create(Movie movie, Integer userId) {
+        // Ignore any id/userId coming from the client: the database generates the id
+        // and the owner is always the authenticated user.
+        Movie toSave = new Movie(null, movie.title(), movie.rating(), movie.review(), movie.releaseYear(), userId);
+        return movieRepository.create(toSave);
     }
-    public void delete(Integer id,Integer userId){
-        movieRepository.delete(id,userId);
+
+    public Movie update(Integer id, Movie movie, Integer userId) {
+        return movieRepository.update(id, movie, userId)
+                .orElseThrow(() -> new MovieNotFoundException(id));
     }
-   public Movie findById(Integer id,Integer userId){
-        Optional<Movie> movie = movieRepository.findById(id,userId);
-        if(movie.isEmpty()){
-            throw new MovieNotFoundException("Movie not found with id " + id);
+
+    public void delete(Integer id, Integer userId) {
+        if (movieRepository.delete(id, userId) == 0) {
+            throw new MovieNotFoundException(id);
         }
-        return movie.get();
     }
 }

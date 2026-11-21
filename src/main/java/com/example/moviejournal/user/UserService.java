@@ -34,6 +34,6 @@ public class UserService {
             throw new RuntimeException("Invalid username or password");
         }
 
-        return jwtService.generateToken(user.getUsername());
+        return jwtService.generateToken(user.getId(), user.getUsername());
     }
 }
