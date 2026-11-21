@@ -4,6 +4,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Maps between DTOs (MovieRequest/MovieResponse) and the internal Movie model,
+ * so controllers stay thin and the repository only knows about Movie.
+ */
 @Service
 public class MovieService {
     private final MovieRepository movieRepository;
@@ -12,24 +16,27 @@ public class MovieService {
         this.movieRepository = movieRepository;
     }
 
-    public List<Movie> findAll(Integer userId) {
-        return movieRepository.findAll(userId);
+    public List<MovieResponse> findAll(Integer userId) {
+        return movieRepository.findAll(userId).stream()
+                .map(MovieResponse::from)
+                .toList();
     }
 
-    public Movie findById(Integer id, Integer userId) {
+    public MovieResponse findById(Integer id, Integer userId) {
         return movieRepository.findById(id, userId)
+                .map(MovieResponse::from)
                 .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
-    public Movie create(Movie movie, Integer userId) {
-        // Ignore any id/userId coming from the client: the database generates the id
-        // and the owner is always the authenticated user.
-        Movie toSave = new Movie(null, movie.title(), movie.rating(), movie.review(), movie.releaseYear(), userId);
-        return movieRepository.create(toSave);
+    public MovieResponse create(MovieRequest request, Integer userId) {
+        // id is null: the database generates it. The owner is always the authenticated user.
+        Movie movie = toMovie(null, request, userId);
+        return MovieResponse.from(movieRepository.create(movie));
     }
 
-    public Movie update(Integer id, Movie movie, Integer userId) {
-        return movieRepository.update(id, movie, userId)
+    public MovieResponse update(Integer id, MovieRequest request, Integer userId) {
+        return movieRepository.update(id, toMovie(id, request, userId), userId)
+                .map(MovieResponse::from)
                 .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
@@ -37,5 +44,9 @@ public class MovieService {
         if (movieRepository.delete(id, userId) == 0) {
             throw new MovieNotFoundException(id);
         }
+    }
+
+    private static Movie toMovie(Integer id, MovieRequest request, Integer userId) {
+        return new Movie(id, request.title(), request.rating(), request.review(), request.releaseYear(), userId);
     }
 }

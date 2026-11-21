@@ -18,25 +18,25 @@ public class MovieController {
     }
 
     @GetMapping
-    List<Movie> findAll(@AuthenticationPrincipal AuthenticatedUser user) {
+    List<MovieResponse> findAll(@AuthenticationPrincipal AuthenticatedUser user) {
         return movieService.findAll(user.id());
     }
 
     @GetMapping("/{id}")
-    Movie findById(@PathVariable Integer id, @AuthenticationPrincipal AuthenticatedUser user) {
+    MovieResponse findById(@PathVariable Integer id, @AuthenticationPrincipal AuthenticatedUser user) {
         return movieService.findById(id, user.id());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    Movie create(@Valid @RequestBody Movie movie, @AuthenticationPrincipal AuthenticatedUser user) {
-        return movieService.create(movie, user.id());
+    MovieResponse create(@Valid @RequestBody MovieRequest request, @AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.create(request, user.id());
     }
 
     @PutMapping("/{id}")
-    Movie update(@PathVariable Integer id, @Valid @RequestBody Movie movie,
-                 @AuthenticationPrincipal AuthenticatedUser user) {
-        return movieService.update(id, movie, user.id());
+    MovieResponse update(@PathVariable Integer id, @Valid @RequestBody MovieRequest request,
+                         @AuthenticationPrincipal AuthenticatedUser user) {
+        return movieService.update(id, request, user.id());
     }
 
     @DeleteMapping("/{id}")

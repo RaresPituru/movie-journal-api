@@ -9,18 +9,18 @@ public class AuthController {
 
     private final UserService userService;
 
-    public AuthController(UserService userService){
+    public AuthController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public String register(@RequestBody User user){
-        userService.register(user);
-        return "User registered successfully";
+    public UserResponse register(@RequestBody RegisterRequest request) {
+        return userService.register(request);
     }
+
     @PostMapping("/login")
-    public String login(@RequestBody User user){
-        return userService.login(user.getUsername(), user.getPassword());
+    public AuthResponse login(@RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 }

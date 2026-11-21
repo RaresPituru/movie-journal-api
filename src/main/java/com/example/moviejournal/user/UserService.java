@@ -7,33 +7,32 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
+    private static final String DEFAULT_ROLE = "USER";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,JwtService jwtService){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
-    public void register(User user){
-
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
-
-        user.setRole("USER");
-        userRepository.create(user);
+    public UserResponse register(RegisterRequest request) {
+        String hashedPassword = passwordEncoder.encode(request.password());
+        User saved = userRepository.create(new User(null, request.username(), hashedPassword, DEFAULT_ROLE));
+        return new UserResponse(saved.id(), saved.username());
     }
 
-    public String login(String username, String password){
-        User user = userRepository.findByUsername(username)
+    public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
 
-        if(!passwordEncoder.matches(password, user.getPassword())){
+        if (!passwordEncoder.matches(request.password(), user.password())) {
             throw new RuntimeException("Invalid username or password");
         }
 
-        return jwtService.generateToken(user.getId(), user.getUsername());
+        return new AuthResponse(jwtService.generateToken(user.id(), user.username()));
     }
 }
