@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -17,11 +18,54 @@ public class MovieRepository {
         this.jdbcClient = jdbcClient;
     }
 
-    public List<Movie> findAll(Integer userId) {
-        return jdbcClient.sql("SELECT * FROM movie WHERE user_id = :userId")
-                .param("userId", userId)
+    /**
+     * Whitelist of sortable API fields -> SQL columns.
+     * Column names cannot be bound as SQL parameters, so ORDER BY has to be built as a string.
+     * Only values from this map ever reach the SQL; the user's input is never concatenated.
+     */
+    private static final Map<String, String> SORT_COLUMNS = Map.of(
+            "title", "title",
+            "rating", "rating",
+            "releaseYear", "release_year");
+
+    public List<Movie> findPage(Integer userId, Integer minRating, String sort, String direction,
+                                int limit, long offset) {
+        String column = SORT_COLUMNS.get(sort);
+        if (column == null) {
+            throw new IllegalArgumentException("Unsupported sort field: " + sort);
+        }
+        String order = "desc".equalsIgnoreCase(direction) ? "DESC" : "ASC";
+
+        // ", id" makes the order deterministic when values are equal, so rows never
+        // appear on two pages or on none.
+        String sql = "SELECT * FROM movie " + whereClause(minRating)
+                + " ORDER BY " + column + " " + order + ", id"
+                + " LIMIT :limit OFFSET :offset";
+
+        return withFilterParams(jdbcClient.sql(sql), userId, minRating)
+                .param("limit", limit)
+                .param("offset", offset)
                 .query(Movie.class)
                 .list();
+    }
+
+    public long count(Integer userId, Integer minRating) {
+        return withFilterParams(jdbcClient.sql("SELECT COUNT(*) FROM movie " + whereClause(minRating)), userId, minRating)
+                .query(Long.class)
+                .single();
+    }
+
+    /** Both the page query and the count query must use exactly the same filter. */
+    private static String whereClause(Integer minRating) {
+        return minRating == null
+                ? "WHERE user_id = :userId"
+                : "WHERE user_id = :userId AND rating >= :minRating";
+    }
+
+    private static JdbcClient.StatementSpec withFilterParams(JdbcClient.StatementSpec spec,
+                                                             Integer userId, Integer minRating) {
+        spec = spec.param("userId", userId);
+        return minRating == null ? spec : spec.param("minRating", minRating);
     }
 
     public Optional<Movie> findById(Integer id, Integer userId) {

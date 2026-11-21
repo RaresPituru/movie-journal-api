@@ -16,10 +16,15 @@ public class MovieService {
         this.movieRepository = movieRepository;
     }
 
-    public List<MovieResponse> findAll(Integer userId) {
-        return movieRepository.findAll(userId).stream()
+    public PageResponse<MovieResponse> findAll(Integer userId, int page, int size, String sort,
+                                               String direction, Integer minRating) {
+        long offset = (long) page * size; // long: page * size could overflow an int
+        List<MovieResponse> content = movieRepository.findPage(userId, minRating, sort, direction, size, offset)
+                .stream()
                 .map(MovieResponse::from)
                 .toList();
+        long totalElements = movieRepository.count(userId, minRating);
+        return PageResponse.of(content, page, size, totalElements);
     }
 
     public MovieResponse findById(Integer id, Integer userId) {
